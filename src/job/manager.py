@@ -1,5 +1,4 @@
 """Job manager for handling request batching and job creation."""
-import logging
 from datetime import datetime, timedelta
 from typing import List
 from uuid import UUID
@@ -9,11 +8,9 @@ from redis import Redis
 from rq import Queue
 from rq.job import Job
 
-from generators.text import generate_text_response
 from job.models import JobRequest, Batch
 from job.processor import process_batch
-from processor.prompt_processor import PromptProcessor
-from processor.output import RedisOutputWriter
+
 
 logger = structlog.getLogger(__name__)
 

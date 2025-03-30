@@ -1,34 +1,35 @@
 """Prompt processor for handling text generation and output storage."""
 
-import logging
 import time
 from typing import AsyncGenerator, Callable
 from uuid import UUID
 
-from .output import OutputWriter
+import structlog
 
-logger = logging.getLogger(__name__)
+from data.interfaces import DataInteractor
+
+logger = structlog.getLogger(__name__)
 
 
 class PromptProcessor:
-    """Processes prompts and stores generated responses using the configured output writer."""
+    """Processes prompts and stores generated responses using the configured data interactor."""
 
     def __init__(
         self,
-        output_writer: OutputWriter,
+        data_interactor: DataInteractor,
         generate_text_fn: Callable[[str], AsyncGenerator[str, None]],
     ) -> None:
         """Initialize the prompt processor.
         
         Args:
-            output_writer: Writer implementation for storing generated responses
+            data_interactor: Implementation for storing and retrieving generated responses
             generate_text_fn: Async generator function that yields text response characters
         """
-        self._output_writer = output_writer
+        self._data_interactor = data_interactor
         self._generate_text = generate_text_fn
 
     async def process_prompt(self, request_id: UUID, prompt: str) -> None:
-        """Process a prompt and store the generated response using the output writer.
+        """Process a prompt and store the generated response using the data interactor.
         
         Args:
             request_id: Unique identifier for the request
@@ -45,11 +46,11 @@ class PromptProcessor:
             char_count = 0
             # Generate and store response character by character
             async for char in self._generate_text(prompt):
-                await self._output_writer.write_char(request_id, char)
+                await self._data_interactor.append_response(request_id, char)
                 char_count += 1
                 
             # Mark the request as completed
-            await self._output_writer.mark_completed(request_id)
+            await self._data_interactor.set_status(request_id, "completed")
             processing_time = time.time() - start_time
             
             logger.info(
@@ -68,9 +69,9 @@ class PromptProcessor:
                 error=str(e),
                 processing_time_ms=processing_time * 1000
             )
-            await self._output_writer.write_error(request_id, str(e))
+            await self._data_interactor.write_error(request_id, str(e))
             raise
 
     async def close(self) -> None:
         """Close the prompt processor and cleanup resources."""
-        await self._output_writer.close()
+        await self._data_interactor.close()

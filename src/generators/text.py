@@ -15,12 +15,16 @@ logger = logging.getLogger(__name__)
 
 DELAY_PER_CHAR = 0.01
 MAX_DELAY_BETWEEN_WORDS = 0.2
-RESPONSE_LENGTH_FACTOR = 2
+RESPONSE_LENGTH_FACTOR = 3
 
 WORDS = [
     "the", "a", "an", "in", "on", "with", "for", "to", "from",
     "text", "response", "generation", "process", "system", "model",
     "input", "output", "data", "information", "content",
+    "analysis", "research", "development", "implementation", "solution",
+    "approach", "methodology", "framework", "architecture", "design",
+    "optimization", "performance", "efficiency", "reliability", "scalability",
+    "integration", "deployment", "monitoring", "maintenance", "support"
 ]
 
 
@@ -37,20 +41,18 @@ def _get_response(words: list[str]) -> str:
 
     # Create response by assembling words
     for _ in range(response_word_count):
-        if random.random() < 0.7 and words:  # 70% chance to use a word from the prompt
-            word = random.choice(words)
+        if random.random() < 0.5 and words:  # 50% chance to use a word from the prompt
+            word: str = random.choice(words)
             # Sometimes modify the word
             if random.random() < 0.3:
-                if random.random() < 0.5:
-                    word = word.upper()
-                else:
-                    word = word.capitalize()
+                word = word.upper()
         else:
             # Use some generic words
             word = random.choice(WORDS)
 
         response_parts.append(word)
 
+    response_parts[0] = response_parts[0].capitalize()
     return " ".join(response_parts)
 
 
@@ -62,8 +64,6 @@ async def generate_text_response(prompt: str) -> AsyncGenerator[str, None]:
     Yields:
         Characters of the generated response, one at a time
     """
-
-    logger.info(f"Generating response for prompt: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
 
     words = prompt.split()
     response = _get_response(words)
@@ -87,5 +87,3 @@ async def generate_text_response(prompt: str) -> AsyncGenerator[str, None]:
         await asyncio.sleep(DELAY_PER_CHAR)
         
         yield char
-    
-    logger.info(f"Completed generation for prompt: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")

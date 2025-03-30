@@ -2,9 +2,9 @@ from uuid import UUID
 
 import structlog
 
+from data import RedisInteractor
 from generators.text import generate_text_response
 from job.models import JobRequest
-from processor.output import RedisOutputWriter
 from processor.prompt_processor import PromptProcessor
 
 logger = structlog.getLogger(__name__)
@@ -34,9 +34,8 @@ def process_batch(requests_data: list[dict], redis_url: str) -> None:
             batch_size=len(requests)
         )
 
-        output_writer = RedisOutputWriter(redis_url)
         processor = PromptProcessor(
-            output_writer=output_writer,
+            data_interactor=RedisInteractor(redis_url=redis_url),
             generate_text_fn=generate_text_response
         )
 

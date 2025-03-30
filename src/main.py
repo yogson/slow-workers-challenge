@@ -8,6 +8,7 @@ from aiohttp import web
 
 from api.app import create_app
 from config import settings
+from data.redis import RedisInteractor
 from job.manager import JobManager
 
 logger = logging.getLogger(__name__)
@@ -18,27 +19,33 @@ class Application:
 
     def __init__(self):
         """Initialize the application."""
-        self.app: Optional[web.Application] = None
+        self.api: Optional[web.Application] = None
         self.job_manager: Optional[JobManager] = None
+        self.data_interactor: Optional[RedisInteractor] = None
         self.shutdown_event = asyncio.Event()
         self._tasks = []
-        logger.info("Initializing application...")
 
     async def start(self):
         """Start the application."""
         logger.info("Starting application...")
         
-        # Create job manager first
-        self.job_manager = JobManager(redis_url=settings.REDIS_URL, queue_name=settings.REDIS_QUEUE_NAME)
+        # Create data interactor
+        self.data_interactor = RedisInteractor(settings.REDIS_URL)
         
-        # Create and configure the application with job manager
-        self.app = create_app(self.job_manager)
+        # Create job manager with data interactor
+        self.job_manager = JobManager(
+            redis_url=settings.REDIS_URL,
+            queue_name=settings.REDIS_QUEUE_NAME,
+        )
+        
+        # Create and configure the application with job manager and data interactor
+        self.api = create_app(self.job_manager, self.data_interactor)
         
         # Start background tasks
         await self._start_background_tasks()
         
         # Start the web server
-        runner = web.AppRunner(self.app)
+        runner = web.AppRunner(self.api)
         await runner.setup()
         site = web.TCPSite(runner, settings.API_HOST, settings.API_PORT)
         await site.start()
@@ -68,8 +75,7 @@ class Application:
         self._tasks.clear()
 
     async def _periodic_purge(self):
-        """Periodically purge completed jobs."""
-        logger.info("Starting periodic purge task...")
+        """Periodically purge completed batches."""
         while not self.shutdown_event.is_set():
             try:
                 await self.job_manager.purge()
@@ -88,11 +94,15 @@ class Application:
         # Cleanup job manager
         if self.job_manager:
             await self.job_manager.close()
+            
+        # Cleanup data interactor
+        if self.data_interactor:
+            await self.data_interactor.close()
         
         # Stop the web server
-        if self.app:
-            await self.app.shutdown()
-            await self.app.cleanup()
+        if self.api:
+            await self.api.shutdown()
+            await self.api.cleanup()
         
         logger.info("Application shutdown complete")
 

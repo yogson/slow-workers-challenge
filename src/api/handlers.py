@@ -4,10 +4,8 @@ from typing import AsyncGenerator
 
 import structlog
 from aiohttp import web
-from redis.asyncio import Redis
 
 from api.models import GenerateRequest, GenerateResponse
-from config import settings
 
 logger = structlog.get_logger()
 
@@ -16,21 +14,17 @@ async def process_request(request: web.Request) -> AsyncGenerator[str, None]:
     """Stream SSE responses from Redis."""
 
     try:
-        # Parse request body
         body = await request.json()
         generate_request = GenerateRequest(**body)
         
-        # Generate request ID
         request_id = uuid.uuid4()
         
-        # Get job manager from application
+        # Get job manager and data interactor from application
         job_manager = request.app["job_manager"]
+        data_interactor = request.app["data_interactor"]
         
         # Submit request to JobManager
         await job_manager.process_request(request_id, generate_request.prompt)
-        
-        # Initialize Redis connection for streaming
-        redis = Redis.from_url(settings.REDIS_URL)
         
         try:
             # Stream results
@@ -40,19 +34,14 @@ async def process_request(request: web.Request) -> AsyncGenerator[str, None]:
                     logger.info(f"Client disconnected for request {request_id}")
                     break
                 
-                # Get current response and status from Redis
-                response_text = await redis.get(f"response:{request_id}")
-                status = await redis.get(f"status:{request_id}")
-                
-                if status:
-                    status = status.decode()
-                else:
-                    status = "in_progress"
+                # Get current response and status
+                response_text = await data_interactor.get_response(request_id)
+                status = await data_interactor.get_status(request_id)
                 
                 # Create response object
                 response = GenerateResponse(
                     request_id=request_id,
-                    text=response_text.decode() if response_text else "",
+                    text=response_text or "",
                     status=status
                 )
                 
@@ -65,8 +54,9 @@ async def process_request(request: web.Request) -> AsyncGenerator[str, None]:
                 
                 await asyncio.sleep(0.05)
                 
-        finally:
-            await redis.close()
+        except Exception as e:
+            logger.error(f"Error in streaming loop: {e}")
+            raise
             
     except Exception as e:
         # Send error response
@@ -84,6 +74,8 @@ async def generate_handler(request: web.Request) -> web.StreamResponse:
 
     try:
         async for data in process_request(request):
+            if not data:
+                continue
             try:
                 await response.write(data.encode())
             except ConnectionResetError:
@@ -103,3 +95,7 @@ async def generate_handler(request: web.Request) -> web.StreamResponse:
 
     return response
 
+
+async def health_handler(request: web.Request) -> web.Response:
+    """Handle health check requests."""
+    return web.json_response(data={"status": "ok"})

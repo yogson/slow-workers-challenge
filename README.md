@@ -26,7 +26,7 @@ uv pip install -e .
 uv pip install -e ".[dev]"
 
 # Run the service
-uvicorn api.main:app --reload
+uvicorn api.main:api --reload
 ```
 
 ### Worker Service Setup
