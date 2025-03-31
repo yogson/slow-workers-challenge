@@ -46,7 +46,7 @@ services:
       - app-network
     restart: unless-stopped
     deploy:
-      replicas: 1
+      replicas: 1  # Here we can scale workers
 
   redis:
     image: redis:7-alpine
