@@ -148,8 +148,14 @@ class JobManager:
             prompt: Prompt text
         """
         logger.info(f"Received new request {rid}")
+        
+        # First, check if we need to process any existing batch
         await self.purge()
+        
+        # Add the new request
         self._add_request(rid=rid, prompt=prompt)
+        
+        # Process the batch if it's full or time window has elapsed
         await self.purge()
 
     async def close(self):

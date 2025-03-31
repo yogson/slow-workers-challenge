@@ -13,7 +13,7 @@ logger = structlog.get_logger()
 
 async def process_request(request: web.Request) -> AsyncGenerator[str, None]:
     """Stream SSE responses from Redis."""
-
+    request_id = None
     try:
         body = await request.json()
         generate_request = GenerateRequest(**body)
@@ -64,6 +64,9 @@ async def process_request(request: web.Request) -> AsyncGenerator[str, None]:
             raise
             
     except Exception as e:
+        # Generate a new request_id if none exists
+        if request_id is None:
+            request_id = uuid.uuid4()
         # Send error response
         yield f"data: {GenerateResponse(
             request_id=request_id, text='', status=JobStatus.FAILED.value, error=str(e)

@@ -36,6 +36,8 @@ class Application:
         self.job_manager = JobManager(
             redis_url=settings.REDIS_URL,
             queue_name=settings.REDIS_QUEUE_NAME,
+            batch_window_ms=settings.BATCH_WINDOW_MS,
+            max_requests_per_job=settings.MAX_REQUESTS_PER_JOB
         )
         
         # Create and configure the application with job manager and data interactor

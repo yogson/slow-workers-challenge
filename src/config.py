@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Job processing settings
     BATCH_WINDOW_MS: int = 250
     MAX_REQUESTS_PER_JOB: int = 4
-    
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -30,4 +30,4 @@ class Settings(BaseSettings):
 
 
 # Create global settings instance
-settings = Settings() 
+settings = Settings()
