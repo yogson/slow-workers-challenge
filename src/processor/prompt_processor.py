@@ -7,6 +7,7 @@ from uuid import UUID
 import structlog
 
 from data.interfaces import DataInteractor
+from job.models import JobStatus
 
 logger = structlog.getLogger(__name__)
 
@@ -50,7 +51,7 @@ class PromptProcessor:
                 char_count += 1
                 
             # Mark the request as completed
-            await self._data_interactor.set_status(request_id, "completed")
+            await self._data_interactor.set_status(request_id, JobStatus.COMPLETED)
             processing_time = time.time() - start_time
             
             logger.info(

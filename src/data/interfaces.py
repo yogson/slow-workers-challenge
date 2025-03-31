@@ -3,6 +3,8 @@
 from typing import Protocol, Optional
 from uuid import UUID
 
+from job.models import JobStatus
+
 
 class DataInteractor(Protocol):
     """Interface for data interaction operations."""
@@ -54,7 +56,7 @@ class DataInteractor(Protocol):
         """
         ...
 
-    async def set_status(self, request_id: UUID, status: str) -> None:
+    async def set_status(self, request_id: UUID, status: JobStatus) -> None:
         """Set the status of a request.
         
         Args:
