@@ -69,6 +69,5 @@ class JobResult:
 
 @dataclass
 class Batch:
-
     requests: list[JobRequest]
     created_at: datetime = field(default_factory=datetime.now)

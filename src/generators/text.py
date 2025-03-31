@@ -18,13 +18,46 @@ MAX_DELAY_BETWEEN_WORDS = 0.2
 RESPONSE_LENGTH_FACTOR = 3
 
 WORDS = [
-    "the", "a", "an", "in", "on", "with", "for", "to", "from",
-    "text", "response", "generation", "process", "system", "model",
-    "input", "output", "data", "information", "content",
-    "analysis", "research", "development", "implementation", "solution",
-    "approach", "methodology", "framework", "architecture", "design",
-    "optimization", "performance", "efficiency", "reliability", "scalability",
-    "integration", "deployment", "monitoring", "maintenance", "support"
+    "the",
+    "a",
+    "an",
+    "in",
+    "on",
+    "with",
+    "for",
+    "to",
+    "from",
+    "text",
+    "response",
+    "generation",
+    "process",
+    "system",
+    "model",
+    "input",
+    "output",
+    "data",
+    "information",
+    "content",
+    "analysis",
+    "research",
+    "development",
+    "implementation",
+    "solution",
+    "approach",
+    "methodology",
+    "framework",
+    "architecture",
+    "design",
+    "optimization",
+    "performance",
+    "efficiency",
+    "reliability",
+    "scalability",
+    "integration",
+    "deployment",
+    "monitoring",
+    "maintenance",
+    "support",
 ]
 
 
@@ -58,7 +91,7 @@ def _get_response(words: list[str]) -> str:
 
 async def generate_text_response(prompt: str) -> AsyncGenerator[str, None]:
     """Generate a text response to the given prompt and stream it character by character.
-    
+
     Args:
         prompt: The input prompt to generate a response for
     Yields:
@@ -67,23 +100,25 @@ async def generate_text_response(prompt: str) -> AsyncGenerator[str, None]:
 
     words = prompt.split()
     response = _get_response(words)
-    
+
     # Add a conclusion
-    conclusion = random.choice([
-        f"\n\nBased on your prompt \"{prompt[:20]}{'...' if len(prompt) > 20 else ''}\", this is my response.",
-        f"\n\nI hope this helps with your request about {words[0] if words else 'this topic'}.",
-        f"\n\nThank you for your prompt. This was my generated response.",
-    ])
-    
+    conclusion = random.choice(
+        [
+            f'\n\nBased on your prompt "{prompt[:20]}{"..." if len(prompt) > 20 else ""}", this is my response.',
+            f"\n\nI hope this helps with your request about {words[0] if words else 'this topic'}.",
+            f"\n\nThank you for your prompt. This was my generated response.",
+        ]
+    )
+
     response += conclusion
-    
+
     # Stream the response character by character
     for i, char in enumerate(response):
         # Add an extra delay between words
-        if i > 0 and response[i-1] == ' ' and random.random() < 0.3:
+        if i > 0 and response[i - 1] == " " and random.random() < 0.3:
             await asyncio.sleep(random.uniform(0, MAX_DELAY_BETWEEN_WORDS))
-        
+
         # Basic delay for each character
         await asyncio.sleep(DELAY_PER_CHAR)
-        
+
         yield char

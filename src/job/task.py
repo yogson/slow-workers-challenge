@@ -23,23 +23,21 @@ def process_batch(requests_data: list[dict], redis_url: str) -> None:
 
     async def process_requests():
         # Convert request data back to JobRequest objects
-        requests = [
-            JobRequest(id=UUID(req["id"]), prompt=req["prompt"])
-            for req in requests_data
-        ]
+        requests = [JobRequest(id=UUID(req["id"]), prompt=req["prompt"]) for req in requests_data]
 
         logger.info(
             "Starting batch processing",
             request_ids=[str(req.id) for req in requests],
-            batch_size=len(requests)
+            batch_size=len(requests),
         )
 
         processor = PromptProcessor(
             data_interactor=RedisInteractor(redis_url=redis_url),
-            generate_text_fn=generate_text_response
+            generate_text_fn=generate_text_response,
         )
 
         try:
+
             async def process_with_logging(request: JobRequest):
                 """Process a single request with logging."""
                 logger.info(f"Processing request {request.id} in batch")
@@ -51,13 +49,8 @@ def process_batch(requests_data: list[dict], redis_url: str) -> None:
                     raise
 
             # Process all requests in the batch in parallel
-            await asyncio.gather(
-                *[process_with_logging(request) for request in requests]
-            )
-            logger.info(
-                "Completed batch processing",
-                request_ids=[str(req.id) for req in requests]
-            )
+            await asyncio.gather(*[process_with_logging(request) for request in requests])
+            logger.info("Completed batch processing", request_ids=[str(req.id) for req in requests])
         finally:
             await processor.close()
 

@@ -17,16 +17,16 @@ async def process_request(request: web.Request) -> AsyncGenerator[str, None]:
     try:
         body = await request.json()
         generate_request = GenerateRequest(**body)
-        
+
         request_id = uuid.uuid4()
-        
+
         # Get job manager and data interactor from application
         job_manager = request.app["job_manager"]
         data_interactor = request.app["data_interactor"]
-        
+
         # Submit request to JobManager
         await job_manager.process_request(request_id, generate_request.prompt)
-        
+
         try:
             # Stream results
             while True:
@@ -34,7 +34,7 @@ async def process_request(request: web.Request) -> AsyncGenerator[str, None]:
                 if request.transport.is_closing():
                     logger.info(f"Client disconnected for request {request_id}")
                     break
-                
+
                 # Get current response and proceed if not empty
                 response_text = await data_interactor.get_response(request_id)
                 if not response_text:
@@ -42,35 +42,35 @@ async def process_request(request: web.Request) -> AsyncGenerator[str, None]:
                     continue
 
                 status = await data_interactor.get_status(request_id)
-                
+
                 # Create response object
                 response = GenerateResponse(
-                    request_id=request_id,
-                    text=response_text,
-                    status=status.value
+                    request_id=request_id, text=response_text, status=status.value
                 )
-                
+
                 # Send response
                 yield f"data: {response.model_dump_json()}\n\n"
-                
+
                 # Break if request is completed or failed
                 if status in (JobStatus.COMPLETED, JobStatus.FAILED):
                     break
-                
+
                 await asyncio.sleep(0.05)
-                
+
         except Exception as e:
             logger.error(f"Error in streaming loop: {e}")
             raise
-            
+
     except Exception as e:
         # Generate a new request_id if none exists
         if request_id is None:
             request_id = uuid.uuid4()
         # Send error response
-        yield f"data: {GenerateResponse(
-            request_id=request_id, text='', status=JobStatus.FAILED.value, error=str(e)
-        ).model_dump_json()}\n\n"
+        yield f"data: {
+            GenerateResponse(
+                request_id=request_id, text='', status=JobStatus.FAILED.value, error=str(e)
+            ).model_dump_json()
+        }\n\n"
 
 
 async def generate_handler(request: web.Request) -> web.StreamResponse:
@@ -98,9 +98,11 @@ async def generate_handler(request: web.Request) -> web.StreamResponse:
         if not response.prepared:
             await response.prepare(request)
         await response.write(
-            f"data: {GenerateResponse(
-                request_id=uuid.uuid4(), text='', status=JobStatus.FAILED.value, error=str(e)
-            ).model_dump_json()}\n\n".encode()
+            f"data: {
+                GenerateResponse(
+                    request_id=uuid.uuid4(), text='', status=JobStatus.FAILED.value, error=str(e)
+                ).model_dump_json()
+            }\n\n".encode()
         )
 
     return response

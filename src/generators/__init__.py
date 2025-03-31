@@ -1,1 +1,1 @@
-"""Text generation modules for the worker service.""" 
+"""Text generation modules for the worker service."""

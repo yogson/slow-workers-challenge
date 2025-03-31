@@ -14,7 +14,7 @@ class RedisInteractor(DataInteractor):
 
     def __init__(self, redis_url: str) -> None:
         """Initialize the Redis interactor.
-        
+
         Args:
             redis_url: Redis connection URL
         """
@@ -24,7 +24,7 @@ class RedisInteractor(DataInteractor):
     @property
     async def redis(self) -> AsyncRedis:
         """Get Redis connection, creating it if necessary.
-        
+
         Returns:
             Redis connection instance
         """
@@ -34,7 +34,7 @@ class RedisInteractor(DataInteractor):
 
     async def write_response(self, request_id: UUID, text: str) -> None:
         """Write a complete response text.
-        
+
         Args:
             request_id: Unique identifier for the request
             text: Response text to write
@@ -46,7 +46,7 @@ class RedisInteractor(DataInteractor):
 
     async def append_response(self, request_id: UUID, char: str) -> None:
         """Append a character to the response text.
-        
+
         Args:
             request_id: Unique identifier for the request
             char: Character to append
@@ -58,7 +58,7 @@ class RedisInteractor(DataInteractor):
 
     async def write_error(self, request_id: UUID, error_message: str) -> None:
         """Write an error message to Redis.
-        
+
         Args:
             request_id: Unique identifier for the request
             error_message: Error message to write
@@ -70,7 +70,7 @@ class RedisInteractor(DataInteractor):
 
     async def set_status(self, request_id: UUID, status: JobStatus) -> None:
         """Set the status of a request.
-        
+
         Args:
             request_id: Unique identifier for the request
             status: Status to set
@@ -80,7 +80,7 @@ class RedisInteractor(DataInteractor):
 
     async def get_status(self, request_id: UUID) -> JobStatus:
         """Get the current status of a request.
-        
+
         Args:
             request_id: Unique identifier for the request
         Returns:
@@ -95,7 +95,7 @@ class RedisInteractor(DataInteractor):
 
     async def get_response(self, request_id: UUID) -> Optional[str]:
         """Get the current response text for a request.
-        
+
         Args:
             request_id: Unique identifier for the request
         Returns:

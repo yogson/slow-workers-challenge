@@ -26,24 +26,24 @@ async def logging_middleware(app: web.Application, handler):
 
 def create_app(job_manager: JobManager, data_interactor: DataInteractor) -> web.Application:
     """Create and configure the web application.
-    
+
     Args:
         job_manager: Job manager instance for processing requests
         data_interactor: Data interactor instance for storing and retrieving responses
-        
+
     Returns:
         Configured web application
     """
     app = web.Application()
-    
+
     # Store dependencies in application state
     app["job_manager"] = job_manager
     app["data_interactor"] = data_interactor
-    
+
     # Configure routes
     app.router.add_get("/health", health_handler)
     app.router.add_post("/generate", generate_handler)
-    
+
     # Add middleware for logging
     app.middlewares.append(logging_middleware)
 
