@@ -62,10 +62,6 @@ WORDS = [
 
 
 def _get_response(words: list[str]) -> str:
-    """
-    Generate a simple response based on the prompt
-    This is a mock implementation that creates a response with similar length to the prompt
-    """
 
     response_parts = []
 

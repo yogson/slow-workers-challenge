@@ -101,13 +101,6 @@ class JobManager:
             self._clear_batch()
 
     async def _create_job(self, requests: List[JobRequest]) -> Job:
-        """Create a new job to process the batch of requests.
-
-        Args:
-            requests: List of job requests to process
-        Returns:
-            Created RQ job
-        """
         # Convert requests to dict for serialization
         requests_data = [{"id": str(req.id), "prompt": req.prompt} for req in requests]
 
@@ -120,12 +113,6 @@ class JobManager:
         return self._queue.enqueue(process_batch, requests_data, self._redis_url, job_timeout="1h")
 
     def _add_request(self, rid: UUID, prompt: str):
-        """Add a new request to the current batch.
-
-        Args:
-            rid: Request ID
-            prompt: Prompt text
-        """
         logger.info(
             "Adding request to batch",
             request_id=str(rid),
@@ -136,12 +123,6 @@ class JobManager:
         self._add_to_batch(JobRequest(id=rid, prompt=prompt))
 
     async def process_request(self, rid: UUID, prompt: str):
-        """Process a new request by adding it to the current batch.
-
-        Args:
-            rid: Request ID
-            prompt: Prompt text
-        """
         logger.info(f"Received new request {rid}")
 
         # First, check if we need to process any existing batch
